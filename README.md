@@ -5,7 +5,7 @@ INTICOIN is an X11 PoW/PoS coin. It is a coin that integrated with true random s
 - X11 hash algorithm, PoW/PoS mixed
 - 5 transaction confirmations
 - 70 minted block confirmations
-- Total coins will be 11 billions
+- Total coins will be 115 millions
 - The coin will be a pure PoS coin after 3 months of PoW mining.
 - A 2.5% premine for bounties and to fund servers and dev expenses
 
