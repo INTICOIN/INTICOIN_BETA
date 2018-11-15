@@ -1,4 +1,4 @@
 obj/version.o: version.cpp version.h clientversion.h \
- /home/inticoin/INTICOIN_POOL/IntiCoin_Beta1.0/src/obj/build.h
+ /home/debian/INTICOIN_BETA/src/obj/build.h
 version.cpp version.h clientversion.h :
- /home/inticoin/INTICOIN_POOL/IntiCoin_Beta1.0/src/obj/build.h :
+ /home/debian/INTICOIN_BETA/src/obj/build.h :
