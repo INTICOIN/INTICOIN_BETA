@@ -44,7 +44,7 @@ script: |
   make $MAKEOPTS install
   cd ..
   #
-  cd INTICOIN_BETA1.1
+  cd INTICOIN_BETA
   mkdir -p $OUTDIR/src
   git archive HEAD | tar -x -C $OUTDIR/src
   cp $OUTDIR/src/doc/README.md $OUTDIR
