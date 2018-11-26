@@ -1,0 +1,296 @@
+Dependencies:
+ 
+sudo apt-get install git
+ 
+sudo apt-get install build-essential libtool autotools-dev automake pkg-config libssl-dev libevent-dev bsdmainutils
+ 
+sudo apt-get install libboost-system-dev libboost-filesystem-dev libboost-chrono-dev libboost-program-options-dev libboost-test-dev libboost-thread-dev
+ 
+sudo apt-get install libboost-all-dev
+ 
+sudo apt-get install software-properties-common
+ 
+sudo add-apt-repository ppa:bitcoin/bitcoin
+ 
+sudo apt-get update
+ 
+sudo apt-get install libdb4.8-dev libdb4.8++-dev
+ 
+sudo apt-get install libminiupnpc-dev
+
+cd src/leveldb
+chmod +x build_detect_platform
+make libleveldb.a libmemenv.a
+ 
+sudo apt-get install libzmq3-dev
+ 
+sudo apt-get install libqt5gui5 libqt5core5a libqt5dbus5 qttools5-dev qttools5-dev-tools libprotobuf-dev protobuf-compiler
+ 
+sudo apt-get install libqt4-dev libprotobuf-dev protobuf-compiler
+ 
+sudo apt-get install qt4-qmake libqt4-dev
+
+
+git clone -b 0.8 https://github.com/litecoin-project/litecoin.git
+ 
+find . -type f -print0 | xargs -0 sed -i 's/litecoin/funcoin/g'
+find . -type f -print0 | xargs -0 sed -i 's/Litecoin/Funcoin/g'
+find . -type f -print0 | xargs -0 sed -i 's/LiteCoin/Funcoin/g'
+find . -type f -print0 | xargs -0 sed -i 's/LITECOIN/FUNCOIN/g'
+find . -type f -print0 | xargs -0 sed -i 's/LTC/FUN/g'
+
+
+find . -type f -print0 | xargs -0 sed -i 's/9333/2333/g'
+find . -type f -print0 | xargs -0 sed -i 's/9332/2332/g'
+
+openssl ecparam -genkey -name secp256k1 -out alertkey.pem
+openssl ec -in alertkey.pem -text > alertkey.hex
+openssl ecparam -genkey -name secp256k1 -out testnetalert.pem
+openssl ec -in testnetalert.pem -text > testnetalert.hex
+openssl ecparam -genkey -name secp256k1 -out genesiscoinbase.pem
+openssl ec -in testnetalert.pem -text > genesiscoinbase.hex
+
+
+
+lista de prefijos hex
+https://en.bitcoin.it/wiki/List_of_address_prefixes
+
+
+para sacar el ntime
+date +%s
+
+guardamos
+ make -f makefile.unix USE_UPNP=--
+
+
+primera opcion
+-------------------------------------------------------------------
+ 
+if (false && block.GetHash() != hashGenesisBlock)
+        {
+            printf("Searching for genesis block...\n");
+            // This will figure out a valid hash and Nonce if you're
+            // creating a different genesis block:
+            uint256 hashTarget = CBigNum().SetCompact(block.nBits).getuint256();
+            uint256 thash;
+            char scratchpad[SCRYPT_SCRATCHPAD_SIZE];
+ 
+            loop
+            {
+#if defined(USE_SSE2)
+                // Detection would work, but in cases where we KNOW it always has SSE2,
+                // it is faster to use directly than to use a function pointer or conditional.
+#if defined(_M_X64) || defined(__x86_64__) || defined(_M_AMD64) || (defined(MAC_OSX) && defined(__i386__))
+                // Always SSE2: x86_64 or Intel MacOS X
+                scrypt_1024_1_1_256_sp_sse2(BEGIN(block.nVersion), BEGIN(thash), scratchpad);
+#else
+                // Detect SSE2: 32bit x86 Linux or Windows
+                scrypt_1024_1_1_256_sp(BEGIN(block.nVersion), BEGIN(thash), scratchpad);
+#endif
+#else
+                // Generic scrypt
+                scrypt_1024_1_1_256_sp_generic(BEGIN(block.nVersion), BEGIN(thash), scratchpad);
+#endif
+                if (thash <= hashTarget)
+                    break;
+                if ((block.nNonce & 0xFFF) == 0)
+                {
+                    printf("nonce %08X: hash = %s (target = %s)\n", block.nNonce, thash.ToString().c_str(), hashTarget.ToString().c_str());
+                }
+                ++block.nNonce;
+                if (block.nNonce == 0)
+                {
+                    printf("NONCE WRAPPED, incrementing time\n");
+                    ++block.nTime;
+                }
+            }
+            printf("block.nTime = %u \n", block.nTime);
+            printf("block.nNonce = %u \n", block.nNonce);
+            printf("block.GetHash = %s\n", block.GetHash().ToString().c_str());
+        }
+
+
+si en caso bota error por el scratch
+2da opcion
+
+---------------------------------------------------------
+
+
+// If genesis block hash does not match, then generate new genesis hash.
+    if (block.GetHash() != hashGenesisBlock)
+    {
+        printf("Searching for genesis block...\n");
+        // This will figure out a valid hash and Nonce if you're
+        // creating a different genesis block:
+        uint256 hashTarget = CBigNum().SetCompact(block.nBits).getuint256();
+        uint256 thash;
+
+        while(true)
+        {
+            thash = scrypt_blockhash(BEGIN(block.nVersion));
+            if (thash <= hashTarget)
+                break;
+            if ((block.nNonce & 0xFFF) == 0)
+            {
+                printf("nonce %08X: hash = %s (target = %s)\n", block.nNonce, thash.ToString().c_str(), hashTarget.ToString().c_str());
+            }
+            ++block.nNonce;
+            if (block.nNonce == 0)
+            {
+                printf("NONCE WRAPPED, incrementing time\n");
+                ++block.nTime;
+            }
+        }
+        printf("block.nTime = %u \n", block.nTime);
+        printf("block.nNonce = %u \n", block.nNonce);
+        printf("block.GetHash = %s\n", block.GetHash().ToString().c_str());
+------------------------------------------------------------------------------
+if(genesis.GetHash() != uint256("0x"))
+        {
+            printf("Searching for genesis block...\n");
+            uint256 hashTarget = CBigNum().SetCompact(genesis.nBits).getuint256();
+            while(uint256(genesis.GetHash()) > hashTarget)
+            {
+                ++genesis.nNonce;
+                if (genesis.nNonce == 0)
+                {
+                    printf("NONCE WRAPPED, incrementing time");
+                    std::cout << std::string("NONCE WRAPPED, incrementing time:\n");
+                    ++genesis.nTime;
+                }
+                if (genesis.nNonce % 10000 == 0)
+                {
+                    printf("Mainnet: nonce %08u: hash = %s \n", genesis.nNonce, genesis.GetHash().ToString().c_str());
+                }
+            }
+
+-----------------------------------------------------------------------------------------------
+
+despues copiar los hashes generados
+
+instal el qt4.qmake
+sudo apt-get install qt4-qmake libqt4-dev
+
+qmake
+make
+
+si en caso no levanta el wallet.dat blk
+./bitcoind -reindex
+
+si hay problemas de puertos
+sudo iptables -A INPUT -p tcp --dport 2333 -j ACCEPT
+
+Puede solucionar esto cambiando los caracteres Spacesactuales Tab. Yo solía vimreparar mi archivo. Simplemente ábrelo:
+
+$ vim makefile
+Y luego ejecuta este comando dentro de:
+
+:%s/^[ ]\+/^I/
+
+para verificar que uso el comando 
+cat -e -t -v  makefile_name
+
+en debian
+MXE toolchain y cross-compiling 
+
+si hay problemas con le overviewpage.moc
+
+C:\Qt\4.8.4\bin\moc.exe -D -p -D_MSC_VER=1700 -DWIN32 D:\software\Proyecto_INTICOIN\IntiCoin_Beta1.0_win\src\qt\overviewpage.cpp -o D:\software\Proyecto_INTICOIN\IntiCoin_Beta1.0_win\build\overviewpage.moc
+
+C:\Qt\4.8.4\bin\moc.exe -D -p -D_MSC_VER=1700 -DWIN32 D:\software\Proyecto_INTICOIN\IntiCoin_Beta1.0_win\src\qt\rpcconsole.cpp -o D:\software\Proyecto_INTICOIN\IntiCoin_Beta1.0_win\build\rpcconsole.moc
+
+
+C:\Qt\4.8.7\bin\moc.exe -D -p -D_MSC_VER=1700 -DWIN32 D:\software\Proyecto_INTICOIN\IntiCoin_Beta1.0_win\src\qt\overviewpage.cpp -o D:\software\Proyecto_INTICOIN\IntiCoin_Beta1.0_win\build\overviewpage.moc
+
+C:\Qt\4.8.7\bin\moc.exe -D -p -D_MSC_VER=1700 -DWIN32 D:\software\Proyecto_INTICOIN\IntiCoin_Beta1.0_win\src\qt\rpcconsole.cpp -o D:\software\Proyecto_INTICOIN\IntiCoin_Beta1.0_win\build\rpcconsole.moc
+
+version 11
+-----------------------------------------------------
+C:\Qt\Qt5.11.1\5.11.1\winrt_x86_msvc2017\bin\moc.exe -D -p -D_MSC_VER=1700 -DWIN32 D:\software\Proyecto_INTICOIN\IntiCoin_Beta1.0_win\src\qt\overviewpage.cpp -o D:\software\Proyecto_INTICOIN\IntiCoin_Beta1.0_win\build\overviewpage.moc
+
+C:\Qt\Qt5.11.1\5.11.1\winrt_x86_msvc2017\bin\moc.exe -D -p -D_MSC_VER=1700 -DWIN32 D:\software\Proyecto_INTICOIN\IntiCoin_Beta1.0_win\src\qt\overviewpage.cpp -o D:\software\Proyecto_INTICOIN\IntiCoin_Beta1.0_win\build\overviewpage.moc
+
+C:\Qt\5.11.0\winrt_x86_msvc2017\bin\moc.exe -D -p -D_MSC_VER=1700 -DWIN32 D:\software\Proyecto_INTICOIN\IntiCoin_Beta1.0_win\src\qt\rpcconsole.cpp -o D:\software\Proyecto_INTICOIN\IntiCoin_Beta1.0_win\build\rpcconsole.moc
+
+LIBS="../libpng-1.6.18/.libs/libpng.a ../../mingw32/i686-w64-mingw32/lib/libz.a" \
+png_CFLAGS="-I../libpng-1.6.18" \
+png_LIBS="-L../libpng-1.6.18/.libs" \
+configure --enable-static --disable-shared --without-tools
+
+set INCLUDE=C:\deps\libpng-1.6.18;C:\deps\openssl-1.0.2k\include
+set LIB=C:\deps\libpng-1.6.18\.libs;C:\deps\openssl-1.0.2k
+
+
+configure -release -opensource -confirm-license -static -make libs -no-sql-sqlite -no-opengl -system-zlib -qt-pcre -no-icu -no-gif -system-libpng -no-libjpeg -no-freetype -no-angle -openssl -no-dbus -no-audio-backend -no-wmf-backend -no-qml-debug
+
+
+
+C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\bin
+
+C:\Python33\;C:\Perl64\site\bin;C:\Perl64\bin;C:\Program Files (x86)\Common Files\Oracle\Java\javapath;C:\ProgramData\Oracle\Java\javapath;%C_EM64T_REDIST11%bin\Intel64;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;%SYSTEMROOT%\System32\WindowsPowerShell\v1.0\;C:\Program Files (x86)\Intel\OpenCL SDK\2.0\bin\x86;C:\Program Files (x86)\Intel\OpenCL SDK\2.0\bin\x64;C:\Program Files (x86)\Skype\Phone\;C:\Program Files (x86)\Windows Kits\8.0\Windows Performance Toolkit\;C:\Program Files\Microsoft SQL Server\110\Tools\Binn\;C:\Program Files\PuTTY\;C:\Qt\4.8.7\bin;C:\OpenSSL-Win64\bin;C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\include;C:\Deps;C:\MinGW\mingw32\i686-w64-mingw32\include\c++;C:\mingw32\bin
+
+TAG POS=1 TYPE=INPUT:SUBMIT ATTR=ID:free_play_form_button
+
+CONTENT=style=display:none
+sudo ln -s /usr/lib/x86_64-linux-gnu/libboost_system.so.1.55.0 /usr/lib/x86_64-linux-gnu/libboost_system.so.1.55.0
+sudo ln /usr/lib/x86_64-linux-gnu/libboost_filesystem.so.1.55.0.2 /usr/lib/x86_64-linux-gnu/libboost_filesystem.so.1.58.0
+sudo ln /usr/lib/x86_64-linux-gnu/libboost_program_options.so.1.55.0 /usr/lib/x86_64-linux-gnu/libboost_program_options.so.1.58.0
+sudo ln /usr/lib/x86_64-linux-gnu/libboost_thread.so.1.55.0 /usr/lib/x86_64-linux-gnu/libboost_thread.so.1.58.0
+sudo ln /usr/lib/x86_64-linux-gnu/libboost_chrono.so.1.55.0 /usr/lib/x86_64-linux-gnu/libboost_chrono.so.1.58.0
+
+
+sudo ln -s /usr/lib/x86_64-linux-gnu/libevent-2.1.so.6 /usr/lib/x86_64-linux-gnu/libevent-2.0.so.5
+
+
+sudo ln -s /usr/lib/x86_64-linux-gnu/libboost_system.so.1.55.0 /usr/lib/x86_64-linux-gnu/libboost_system.so.1.58.0
+sudo ln -s /usr/lib/x86_64-linux-gnu/libboost_filesystem.so.1.62.0 /usr/lib/x86_64-linux-gnu/libboost_filesystem.so.1.55.0
+sudo ln -s /usr/lib/x86_64-linux-gnu/libboost_program_options.so.1.62.0 /usr/lib/x86_64-linux-gnu/libboost_program_options.so.1.55.0
+sudo ln -s /usr/lib/x86_64-linux-gnu/libboost_thread.so.1.62.0 /usr/lib/x86_64-linux-gnu/libboost_thread.so.1.55.0
+sudo ln -s /usr/lib/x86_64-linux-gnu/libevent-2.1.so.6 /usr/lib/x86_64-linux-gnu/libevent-2.0.so.5
+
+
+sudo rm /usr/lib/x86_64-linux-gnu/libboost_system.so.1.55.0
+sudo rm /usr/lib/x86_64-linux-gnu/libboost_filesystem.so.1.55.0
+sudo rm /usr/lib/x86_64-linux-gnu/libboost_program_options.so.1.55.0
+sudo rm /usr/lib/x86_64-linux-gnu/libboost_thread.so.1.55.0
+sudo rm /usr/lib/x86_64-linux-gnu/libboost_atomic.so.1.55.0
+sudo rm /usr/lib/x86_64-linux-gnu/libboost_chrono.so.1.55.0
+sudo rm /usr/lib/x86_64-linux-gnu/libevent-2.0.so.5
+
+sudo rm /usr/lib/x86_64-linux-gnu/libboost_system.so.1.58.0
+sudo rm /usr/lib/x86_64-linux-gnu/libboost_filesystem.so.1.58.0
+sudo rm /usr/lib/x86_64-linux-gnu/libboost_program_options.so.1.58.0
+sudo rm /usr/lib/x86_64-linux-gnu/libboost_thread.so.1.58.0
+sudo rm /usr/lib/x86_64-linux-gnu/libevent-2.0.so.5
+
+sudo apt --purge remove libboost1.62-all-dev libboost1.62 libboost1.62-dev
+
+sudo apt --purge remove libboost1.55-all-dev libboost1.55 libboost1.55-dev
+sudo apt-get autoremove -y libboost1.55-all-dev libboost1.55 libboost1.55-dev
+sudo apt-get clean libboost1.55-all-dev libboost1.55 libboost1.55-dev
+udo apt-get autoremove && sudo apt-get clean
+
+sudo rm -f /usr/lib/libboost_*
+
+sudo apt install libboost-dev libboost-all-dev
+
+intentamos de nuveo
+
+sudo apt-get install libboost_system.so.1.55.0 
+sudo apt-get install libboost_system.so.1.58.0-dev
+
+
+sudo apt-get install libboost-program-options-dev
+sudo apt-get install libboost-program-options1.55.0 libboost-program-options1.55-dev
+libboost-program-options1.55-dev
+
+sudo ln -s /usr/lib/x86_64-linux-gnu/libboost_system.so.1.58.0 /usr/lib/x86_64-linux-gnu/libboost_program_options.so.1.55.0
+
+instalar boost 1.58.0 de software 
+./boostrap.sh --prefix=../boost
+./b2 --layout=tagged
+./b2 --layout=tagged install
+
+dpkg -s libboost-dev | grep 'Version'
+sudo apt-get install libboost-dev=1.58.0
+sudo apt-get install libboost1.55*
